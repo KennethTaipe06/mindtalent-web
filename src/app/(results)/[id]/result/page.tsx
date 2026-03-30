@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import api from "@/lib/api";
+import api, { downloadExcel } from "@/lib/api";
 
 interface ScaleResult {
   rawScore: number;
@@ -58,13 +58,21 @@ export default function ResultPage() {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900">Resultados del Test</h1>
-          <button
-            onClick={() => router.push("/candidate")}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            Volver al Dashboard
-          </button>
+          <h1 className="text-xl font-bold text-gray-900">Resultados de la Evaluacion</h1>
+          <div className="flex gap-3">
+            <button
+              onClick={() => downloadExcel(`/reports/session/${sessionId}`, `resultado_${sessionId}.xlsx`)}
+              className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+            >
+              Descargar Excel
+            </button>
+            <button
+              onClick={() => router.push("/candidate")}
+              className="text-sm text-blue-600 hover:text-blue-800 py-2"
+            >
+              Volver al Dashboard
+            </button>
+          </div>
         </div>
       </nav>
 

@@ -1,0 +1,1 @@
+DATABASE_URL=postgresql://mindtalent:mindtalent_dev_2024@localhost:5555/mindtalent

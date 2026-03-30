@@ -31,8 +31,11 @@ export default function LoginPage() {
         case "CANDIDATE":
           router.push("/candidate");
           break;
+        case "AUDITOR":
+          router.push("/auditor");
+          break;
         default:
-          router.push("/admin");
+          router.push("/login");
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Error al iniciar sesion");

@@ -31,7 +31,7 @@ export default function Home() {
         router.push("/candidate");
         break;
       case "AUDITOR":
-        router.push("/admin");
+        router.push("/auditor");
         break;
       default:
         router.push("/login");

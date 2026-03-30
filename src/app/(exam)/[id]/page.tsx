@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
+import { getTestPublicName } from "@/lib/utils";
 
 interface Question {
   id: string;
@@ -164,7 +165,7 @@ export default function ExamPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-3 flex justify-between items-center">
-          <h1 className="font-bold text-gray-900">{test.name}</h1>
+          <h1 className="font-bold text-gray-900">{getTestPublicName(test.name)}</h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-500">
               {currentIdx + 1} / {test.questions.length}
