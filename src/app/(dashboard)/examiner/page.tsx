@@ -324,6 +324,7 @@ export default function ExaminerDashboard() {
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cedula</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ingreso</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reporte</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -340,6 +341,16 @@ export default function ExaminerDashboard() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {c.startedAt ? new Date(c.startedAt).toLocaleTimeString("es-EC") : "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {c.status === "COMPLETED" && c.sessionId && (
+                          <button
+                            onClick={() => router.push(`/${c.sessionId}/result`)}
+                            className="text-xs text-indigo-600 hover:text-indigo-800"
+                          >
+                            Ver Reporte
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

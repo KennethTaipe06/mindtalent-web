@@ -26,7 +26,7 @@ interface User {
   createdAt: string;
 }
 
-type ActiveTab = "tests" | "users" | "create-test";
+type ActiveTab = "tests" | "users" | "create-test" | "create-user";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -36,6 +36,8 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("tests");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editForm, setEditForm] = useState({ firstName: "", lastName: "", role: "" });
 
   // Create test form
   const [testForm, setTestForm] = useState({
@@ -46,6 +48,16 @@ export default function AdminDashboard() {
     timeLimitMin: 30,
     totalQuestions: 90,
     instructions: "",
+  });
+
+  // Create user form
+  const [userForm, setUserForm] = useState({
+    email: "",
+    password: "",
+    cedula: "",
+    firstName: "",
+    lastName: "",
+    role: "EXAMINER",
   });
 
   const fetchData = useCallback(() => {
@@ -111,6 +123,51 @@ export default function AdminDashboard() {
       fetchData();
     } catch {
       showMessage("error", "Error al cambiar el rol");
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post("/users", userForm);
+      showMessage("success", "Usuario creado exitosamente");
+      setUserForm({ email: "", password: "", cedula: "", firstName: "", lastName: "", role: "EXAMINER" });
+      setActiveTab("users");
+      fetchData();
+    } catch (err: any) {
+      showMessage("error", err.response?.data?.message || "Error al crear el usuario");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEditUser = (u: User) => {
+    setEditingUser(u);
+    setEditForm({ firstName: u.firstName, lastName: u.lastName, role: u.role });
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    try {
+      await api.put(`/users/${editingUser.id}`, editForm);
+      showMessage("success", "Usuario actualizado");
+      setEditingUser(null);
+      fetchData();
+    } catch (err: any) {
+      showMessage("error", err.response?.data?.message || "Error al actualizar el usuario");
+    }
+  };
+
+  const handleDeleteUser = async (u: User) => {
+    if (!confirm(`¿Eliminar a ${u.firstName} ${u.lastName}? Esta accion no se puede deshacer.`)) return;
+    try {
+      await api.delete(`/users/${u.id}`);
+      showMessage("success", "Usuario eliminado");
+      fetchData();
+    } catch (err: any) {
+      showMessage("error", err.response?.data?.message || "Error al eliminar el usuario");
     }
   };
 
@@ -200,6 +257,14 @@ export default function AdminDashboard() {
           >
             + Crear Test
           </button>
+          {user.role === "SUPER_ADMIN" && (
+            <button
+              onClick={() => setActiveTab("create-user")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "create-user" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100 border"}`}
+            >
+              + Crear Usuario
+            </button>
+          )}
         </div>
 
         {/* Tests Tab */}
@@ -286,13 +351,31 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        {u.id !== user.id && user.role === "SUPER_ADMIN" && (
-                          <button
-                            onClick={() => handleToggleUser(u.id, u.isActive)}
-                            className={`text-xs px-3 py-1 rounded font-medium ${u.isActive ? "bg-red-100 text-red-700 hover:bg-red-200" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
-                          >
-                            {u.isActive ? "Desactivar" : "Activar"}
-                          </button>
+                        {user.role === "SUPER_ADMIN" && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openEditUser(u)}
+                              className="text-xs px-3 py-1 rounded font-medium bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            >
+                              Editar
+                            </button>
+                            {u.id !== user.id && (
+                              <>
+                                <button
+                                  onClick={() => handleToggleUser(u.id, u.isActive)}
+                                  className={`text-xs px-3 py-1 rounded font-medium ${u.isActive ? "bg-red-100 text-red-700 hover:bg-red-200" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
+                                >
+                                  {u.isActive ? "Desactivar" : "Activar"}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(u)}
+                                  className="text-xs px-3 py-1 rounded font-medium bg-red-600 text-white hover:bg-red-700"
+                                >
+                                  Eliminar
+                                </button>
+                              </>
+                            )}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -407,7 +490,154 @@ export default function AdminDashboard() {
             </form>
           </div>
         )}
+
+        {/* Create User Tab */}
+        {activeTab === "create-user" && user.role === "SUPER_ADMIN" && (
+          <div className="bg-white rounded-xl shadow-sm border">
+            <div className="px-6 py-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">Crear Nuevo Usuario</h2>
+            </div>
+            <form onSubmit={handleCreateUser} className="p-6 space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                  <input
+                    type="text"
+                    value={userForm.firstName}
+                    onChange={(e) => setUserForm({ ...userForm, firstName: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+                  <input
+                    type="text"
+                    value={userForm.lastName}
+                    onChange={(e) => setUserForm({ ...userForm, lastName: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={userForm.email}
+                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cedula</label>
+                  <input
+                    type="text"
+                    value={userForm.cedula}
+                    onChange={(e) => setUserForm({ ...userForm, cedula: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contrasena</label>
+                  <input
+                    type="password"
+                    value={userForm.password}
+                    onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    minLength={6}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+                  <select
+                    value={userForm.role}
+                    onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  >
+                    <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                    <option value="ADMIN">ADMIN</option>
+                    <option value="EXAMINER">EXAMINER</option>
+                    <option value="CANDIDATE">CANDIDATE</option>
+                    <option value="AUDITOR">AUDITOR</option>
+                  </select>
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                {loading ? "Creando..." : "Crear Usuario"}
+              </button>
+            </form>
+          </div>
+        )}
       </main>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+            <div className="px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Editar Usuario</h3>
+            </div>
+            <form onSubmit={handleUpdateUser} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  value={editForm.firstName}
+                  onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+                <input
+                  type="text"
+                  value={editForm.lastName}
+                  onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                >
+                  <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="EXAMINER">EXAMINER</option>
+                  <option value="CANDIDATE">CANDIDATE</option>
+                  <option value="AUDITOR">AUDITOR</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 border"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Guardar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

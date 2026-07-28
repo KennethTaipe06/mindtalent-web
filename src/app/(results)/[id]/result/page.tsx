@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import api, { downloadExcel, downloadPdf } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 
 interface ScaleResult {
   rawScore: number;
@@ -29,6 +30,7 @@ export default function ResultPage() {
   const sessionId = params.id as string;
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(true);
+  const canDownloadReport = getUser()?.role !== "CANDIDATE";
 
   useEffect(() => {
     api
@@ -60,18 +62,22 @@ export default function ResultPage() {
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-900">Resultados de la Evaluacion</h1>
           <div className="flex gap-3">
-            <button
-              onClick={() => downloadExcel(`/reports/session/${sessionId}`, `resultado_${sessionId}.xlsx`)}
-              className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-            >
-              Descargar Excel
-            </button>
-            <button
-              onClick={() => downloadPdf(`/reports/session/${sessionId}/pdf`, `resultado_${sessionId}.pdf`)}
-              className="text-sm bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-            >
-              Descargar PDF
-            </button>
+            {canDownloadReport && (
+              <>
+                <button
+                  onClick={() => downloadExcel(`/reports/session/${sessionId}`, `resultado_${sessionId}.xlsx`)}
+                  className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                >
+                  Descargar Excel
+                </button>
+                <button
+                  onClick={() => downloadPdf(`/reports/session/${sessionId}/pdf`, `resultado_${sessionId}.pdf`)}
+                  className="text-sm bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+                >
+                  Descargar PDF
+                </button>
+              </>
+            )}
             <button
               onClick={() => router.push("/candidate")}
               className="text-sm text-blue-600 hover:text-blue-800 py-2"
