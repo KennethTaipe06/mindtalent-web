@@ -135,6 +135,12 @@ export default function AdminDashboard() {
             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
               {user.role}
             </span>
+            <button
+              onClick={() => router.push("/examiner")}
+              className="text-sm text-indigo-600 hover:text-indigo-800"
+            >
+              Panel Examinador
+            </button>
             <button onClick={logout} className="text-sm text-red-600 hover:text-red-800">
               Cerrar Sesion
             </button>

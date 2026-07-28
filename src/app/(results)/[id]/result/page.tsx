@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import api, { downloadExcel } from "@/lib/api";
+import api, { downloadExcel, downloadPdf } from "@/lib/api";
 
 interface ScaleResult {
   rawScore: number;
@@ -65,6 +65,12 @@ export default function ResultPage() {
               className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
             >
               Descargar Excel
+            </button>
+            <button
+              onClick={() => downloadPdf(`/reports/session/${sessionId}/pdf`, `resultado_${sessionId}.pdf`)}
+              className="text-sm bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+            >
+              Descargar PDF
             </button>
             <button
               onClick={() => router.push("/candidate")}

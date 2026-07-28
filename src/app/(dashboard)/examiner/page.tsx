@@ -189,6 +189,14 @@ export default function ExaminerDashboard() {
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{user.firstName} {user.lastName}</span>
             <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">{user.role}</span>
+            {["SUPER_ADMIN", "ADMIN"].includes(user.role) && (
+              <button
+                onClick={() => router.push("/admin")}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Panel Admin
+              </button>
+            )}
             <button onClick={logout} className="text-sm text-red-600 hover:text-red-800">Cerrar Sesion</button>
           </div>
         </div>
